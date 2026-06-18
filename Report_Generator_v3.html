@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZIV ANALYTICS - מחולל דוחות מחקר</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="Report_Generator_v3.css">
+</head>
+
+<body class="text-slate-800">
+
+    <!-- Header -->
+    <header class="bg-slate-900 text-white shadow-md sticky top-0 z-50 no-print">
+        <div class="max-w-7xl mx-auto px-3 py-2 flex flex-wrap justify-between items-center gap-2">
+            <div class="flex items-center gap-2">
+                <button onclick="toggleMobileSidebar()"
+                    class="mobile-toggle bg-slate-700 hover:bg-slate-600 p-2 rounded-lg items-center gap-1">
+                    <i data-lucide="menu" class="w-4 h-4"></i>
+                </button>
+                <div class="bg-blue-600 p-1.5 rounded-lg">
+                    <i data-lucide="trending-up" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h1 class="text-sm font-bold leading-none">REPORT GENERATOR</h1>
+                    <span class="text-[9px] text-slate-400 hidden sm:block">מחולל דוחות מחקר אינטראקטיביים - AI &amp;
+                        טכנולוגיה</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-1.5 flex-wrap">
+                <button onclick="exportToHTML()"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 text-xs">
+                    <i data-lucide="code" class="w-3.5 h-3.5"></i>
+                    <span class="hidden sm:inline">ייצוא ל-</span>HTML
+                </button>
+                <button onclick="exportToWord()"
+                    class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 text-xs">
+                    <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                    <span class="hidden sm:inline">ייצוא ל-</span>DOCX
+                </button>
+                <button onclick="window.print()"
+                    class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 text-xs">
+                    <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                    <span class="hidden sm:inline">PDF</span>
+                </button>
+                <button onclick="resetData()"
+                    class="bg-rose-950 hover:bg-rose-900 text-rose-200 px-2.5 py-1.5 rounded-lg text-xs border border-rose-800">איפוס</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile overlay -->
+    <div id="mobileOverlay" class="hidden fixed inset-0 bg-black/30 z-40 no-print" onclick="toggleMobileSidebar()"></div>
+
+    <div class="max-w-7xl mx-auto px-3 py-4 flex gap-4 main-layout">
+
+        <!-- Sidebar -->
+        <aside id="sidebarPanel" class="sidebar-panel w-60 shrink-0 flex flex-col gap-3 no-print">
+
+            <!-- XLSX Import -->
+            <div class="bg-white rounded-xl p-3 shadow-sm border border-slate-200">
+                <h3 class="font-bold text-slate-900 text-xs flex items-center gap-2 mb-2">
+                    <i data-lucide="database" class="text-emerald-600 w-4 h-4"></i>
+                    ייבוא נתונים מ-Excel
+                </h3>
+                <p class="text-[10px] text-slate-500 mb-2 leading-relaxed">העלה קובץ XLSX עם נתוני מניות (Ticker,
+                    Company Name, Price...)</p>
+                <button onclick="toggleImportArea()"
+                    class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 py-1.5 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5">
+                    <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                    פתח ייבוא נתונים
+                </button>
+                <div id="importArea" class="hidden mt-2 space-y-2">
+                    <label class="flex flex-col items-center justify-center w-full h-16 border-2 border-emerald-300 border-dashed rounded-lg cursor-pointer bg-emerald-50 hover:bg-emerald-100 transition-all">
+                        <i data-lucide="upload-cloud" class="w-5 h-5 text-emerald-500 mb-0.5"></i>
+                        <p class="text-[10px] text-emerald-700 font-bold">לחץ / גרור: XLSX או CSV</p>
+                        <p class="text-[9px] text-emerald-600 mt-0.5">תואם מחשב וטלפון נייד</p>
+                        <input type="file" id="xlsxFileInput" accept=".xlsx,.xls,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" class="hidden" onchange="handleXlsxImport(this)" />
+                    </label>
+                    <div id="csvPasteWrap" class="hidden">
+                        <textarea id="csvPasteArea" rows="4" placeholder="הדבק נתוני CSV כאן..." class="w-full text-[9px] border border-slate-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-emerald-400 font-mono resize-y"></textarea>
+                        <button onclick="parsePastedCsv()" class="mt-1 w-full bg-emerald-100 hover:bg-emerald-200 text-emerald-800 py-1 rounded text-[10px] font-bold">נתח CSV שהודבק</button>
+                    </div>
+                    <div id="importStatus" class="text-[10px] text-center text-slate-500"></div>
+                    <div id="xlsxColumnMapper" class="hidden"></div>
+                    <button id="importConfirmBtn" onclick="confirmXlsxImport()"
+                        class="hidden w-full bg-emerald-600 hover:bg-emerald-700 text-white py-1.5 rounded text-xs font-bold">
+                        אשר ייבוא נתונים
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stock selector -->
+            <div class="bg-white rounded-xl p-3 shadow-sm border border-slate-200 flex flex-col"
+                style="max-height:48vh;">
+                <div class="flex items-center justify-between mb-1">
+                    <h3 class="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                        <i data-lucide="list-filter" class="w-4 h-4 text-blue-600"></i>
+                        בחירת מניה
+                    </h3>
+                    <span id="stockCount"
+                        class="text-[12px] font-bold bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">0</span>
+                </div>
+                <div id="lastImportDate" class="text-[9px] text-slate-400 mb-1 hidden"></div>
+                <input type="text" id="searchStock" oninput="filterStocks()" placeholder="חפש מניה..."
+                    class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-1.5">
+                <div class="overflow-y-auto flex-1" id="stocksList"></div>
+            </div>
+
+            <!-- Sections manager -->
+            <div class="bg-white rounded-xl p-3 shadow-sm border border-slate-200">
+                <h3 class="font-bold text-slate-900 text-xs flex items-center gap-2 mb-2">
+                    <i data-lucide="layers" class="w-4 h-4 text-purple-600"></i>
+                    ניהול פסקאות
+                </h3>
+                <div id="sectionManagerList" class="space-y-1 mb-2"></div>
+                <button onclick="openAddSectionModal()"
+                    class="w-full bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 py-1.5 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5">
+                    <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                    הוסף פסקה חדשה
+                </button>
+            </div>
+
+        </aside>
+
+        <!-- Main workspace -->
+        <main class="flex-1 min-w-0">
+            <div id="reportContainer" class="flex justify-center">
+                <div class="report-page" id="activeReport">
+
+                    <!-- Report content -->
+                    <div class="report-content">
+                        <div class="flex justify-between items-center border-b-2 border-slate-900 pb-2 mb-3">
+                            <div class="flex items-center gap-2">
+                                <div class="relative group cursor-pointer shrink-0"
+                                    onclick="document.getElementById('logoFileInput').click()">
+                                    <img id="logoImg"
+                                        src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24' fill='none' stroke='%231e293b' stroke-width='2'><polygon points='12 2 2 7 12 12 22 7 12 2'></polygon><polyline points='2 17 12 22 22 17'></polyline><polyline points='2 12 12 17 22 12'></polyline></svg>"
+                                        class="w-9 h-9 object-contain rounded border border-dashed border-slate-300 p-0.5 bg-slate-50"
+                                        alt="לוגו">
+                                    <div
+                                        class="absolute inset-0 bg-black/40 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <i data-lucide="upload" class="w-3 h-3 text-white"></i>
+                                    </div>
+                                </div>
+                                <input type="file" id="logoFileInput" accept="image/*" class="hidden"
+                                    onchange="handleLogoUpload(this)">
+                                <div>
+                                    <div class="text-xl font-black text-slate-900 tracking-wider leading-none"
+                                        id="logoTextMain" contenteditable="true">ZIV ANALYTICS</div>
+                                    <div class="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-0.5"
+                                        id="logoTextSub" contenteditable="true">Capital Markets | Research Department
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-left text-[10px] text-slate-600">
+                                <div class="font-bold" id="headerDate" contenteditable="true">06.06.2026</div>
+                                <div id="headerAuthor" contenteditable="true">מחלקת מחקר טכנולוגיה</div>
+                                <div id="headerContact" contenteditable="true">research@zivcm.co.il</div>
+                            </div>
+                        </div>
+
+                        <!-- Title banner -->
+                        <div class="bg-slate-900 text-white p-3 rounded-lg flex justify-between items-center mb-3">
+                            <div>
+                                <span
+                                    class="bg-blue-600 text-[9px] text-white px-1.5 py-0.5 rounded font-bold uppercase"
+                                    id="tickerBadge" contenteditable="true">SMCI</span>
+                                <h2 class="text-base font-extrabold mt-1" id="companyNameHeader" contenteditable="true">
+                                    Super Micro Computer Inc.</h2>
+                                <p class="text-[10px] text-slate-400" id="headerSubtitle" contenteditable="true">עדכון
+                                    אנליזה - דוח רבעוני ועדכון ממודל הערכת שווי</p>
+                            </div>
+                            <div class="text-left">
+                                <div class="text-[9px] text-slate-300 font-semibold" id="headerRecLabel"
+                                    contenteditable="true">המלצה ומחיר יעד</div>
+                                <div class="text-sm font-bold text-emerald-400" id="headerRecommendation"
+                                    contenteditable="true">קנייה (BUY)</div>
+                                <div class="text-[10px] text-slate-200">מחיר שוק: <span id="headerMarketPrice"
+                                        contenteditable="true">$46.9</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Two-column grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 two-col-report">
+
+                            <!-- Right col: Sections -->
+                            <div class="md:col-span-8 flex flex-col gap-2.5 border-r border-slate-100 pr-3"
+                                id="sectionsColumn"></div>
+
+                            <!-- Left col: Indicators + Chart -->
+                            <div class="md:col-span-4 flex flex-col gap-2.5">
+
+                                <!-- Financial indicators -->
+                                <div class="bg-slate-50 border border-slate-200 rounded-xl p-2">
+                                    <h3 class="text-[12px] font-black text-slate-900 border-b border-slate-300 pb-1 mb-1.5 flex items-center gap-1.5 uppercase tracking-wider"
+                                        id="indCardTitle" contenteditable="true">
+                                        <i data-lucide="line-chart" class="w-3.5 h-3.5 text-blue-600 shrink-0"></i>
+                                        אינדיקטורים פיננסיים מרכזיים
+                                    </h3>
+                                    <div class="flex flex-col gap-0.5">
+                                        <div class="ind-row-c"><span class="ind-lbl" contenteditable="true">שווי שוק:</span><span class="ind-val text-slate-800" id="indMarketcap" contenteditable="true">$28,207M</span></div>
+                                        <div class="ind-row-c"><span class="ind-lbl" contenteditable="true">מחיר מניה:</span><span class="ind-val" id="indPrice" contenteditable="true">$46.90</span></div>
+                                        <div class="ind-row-c"><span class="ind-lbl" contenteditable="true">שינוי יומי:</span><span class="ind-val font-sans" id="indDailyChange" contenteditable="true">-1.10%</span></div>
+                                        <div class="ind-row-c"><span class="ind-lbl" contenteditable="true">מחזור מסחר:</span><span class="ind-val" id="indVolume" contenteditable="true">0.16M</span></div>
+                                        <div class="border-t border-slate-200 my-0.5"></div>
+                                        <div class="ind-row-c"><span class="ind-lbl" contenteditable="true">מכפיל רווח (TTM):</span><span class="ind-val" id="indPeTtm" contenteditable="true">25.49</span></div>
+                                        <div class="ind-row-c"><span class="ind-lbl" contenteditable="true">P/E 2026:</span><span class="ind-val text-blue-700" id="indPe2026" contenteditable="true">18.04</span></div>
+                                        <div class="ind-row-c"><span class="ind-lbl" contenteditable="true">CAGR:</span><span class="ind-val" id="indCagr" contenteditable="true">25.65%</span></div>
+                                        <div class="ind-row-c"><span class="ind-lbl" contenteditable="true">PEG:</span><span class="ind-val" id="indPeg" contenteditable="true">0.99</span></div>
+                                        <div class="ind-row-c"><span class="ind-lbl" contenteditable="true">PEG 2026:</span><span class="ind-val text-emerald-700" id="indPeg2026" contenteditable="true">0.70</span></div>
+                                        <div class="ind-row-c"><span class="ind-lbl" contenteditable="true">בטא (Beta):</span><span class="ind-val" id="indBeta" contenteditable="true">1.87</span></div>
+                                        <div class="border-t border-slate-200 my-0.5"></div>
+                                        <div class="ind-row-c"><span class="ind-lbl" contenteditable="true">גבוה 52 שבועות:</span><span class="ind-val text-rose-700 font-sans" id="indHigh52" contenteditable="true">-24.79%</span></div>
+                                        <div class="ind-row-c"><span class="ind-lbl" contenteditable="true">נמוך 52 שבועות:</span><span class="ind-val text-emerald-700 font-sans" id="indLow52" contenteditable="true">+140.76%</span></div>
+                                        <div class="border-t border-slate-200 my-0.5"></div>
+                                        <div class="text-[12px] font-bold text-slate-700 mb-0.5" contenteditable="true">תשואות לתקופות מסחר:</div>
+                                        <div class="grid grid-cols-2 gap-1 text-[12px]">
+                                            <div class="flex justify-between bg-white p-1 rounded border border-slate-100">
+                                                <span class="text-slate-400">חודש:</span>
+                                                <span class="font-bold font-sans perf-val" id="perf1M" contenteditable="true" onblur="applyPerfColor(this);saveCurrentReportState()">+68.52%</span>
+                                            </div>
+                                            <div class="flex justify-between bg-white p-1 rounded border border-slate-100">
+                                                <span class="text-slate-400">3M:</span>
+                                                <span class="font-bold font-sans perf-val" id="perf3M" contenteditable="true" onblur="applyPerfColor(this);saveCurrentReportState()">+45.47%</span>
+                                            </div>
+                                            <div class="flex justify-between bg-white p-1 rounded border border-slate-100">
+                                                <span class="text-slate-400">6M:</span>
+                                                <span class="font-bold font-sans perf-val" id="perf6M" contenteditable="true" onblur="applyPerfColor(this);saveCurrentReportState()">+35.20%</span>
+                                            </div>
+                                            <div class="flex justify-between bg-white p-1 rounded border border-slate-100">
+                                                <span class="text-slate-400">12M:</span>
+                                                <span class="font-bold font-sans perf-val" id="perf12M" contenteditable="true" onblur="applyPerfColor(this);saveCurrentReportState()">+15.04%</span>
+                                            </div>
+                                        </div>
+                                        <div class="flex justify-between text-[12px] bg-blue-50 p-1 rounded border border-blue-100">
+                                            <span class="text-blue-700 font-bold" contenteditable="true">YTD:</span>
+                                            <span class="font-bold font-sans perf-val" id="perfYtd" contenteditable="true" onblur="applyPerfColor(this);saveCurrentReportState()">+60.23%</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- EPS vertical bar chart -->
+                                <div class="bg-slate-900 text-white rounded-xl p-3">
+                                    <h3 class="text-[11px] font-black border-b border-slate-700 pb-1 mb-2 flex items-center gap-1.5 uppercase tracking-wider text-slate-200"
+                                        id="epsCardTitle" contenteditable="true">
+                                        <i data-lucide="bar-chart-2" class="w-3.5 h-3.5 text-emerald-400 shrink-0"></i>
+                                        תחזית רווח למניה (EPS)
+                                    </h3>
+                                    <div class="bar-chart-container" id="epsBarChart">
+                                        <div class="bar-chart-bar-wrap">
+                                            <div class="bar-chart-val text-slate-300" id="epsValTtm" contenteditable="true" onblur="renderEpsBars()">1.84</div>
+                                            <div id="epsBarTtm" class="bar-chart-bar bg-slate-400" data-val="TTM" style="height:40%"></div>
+                                            <div class="bar-chart-label" id="epsLabelTtm" contenteditable="true">TTM</div>
+                                        </div>
+                                        <div class="bar-chart-bar-wrap">
+                                            <div class="bar-chart-val text-slate-200" id="epsVal26" contenteditable="true" onblur="renderEpsBars()">2.60</div>
+                                            <div id="epsBar26" class="bar-chart-bar bg-blue-500" data-val="2026" style="height:65%"></div>
+                                            <div class="bar-chart-label" id="epsLabel26" contenteditable="true">2026</div>
+                                        </div>
+                                        <div class="bar-chart-bar-wrap">
+                                            <div class="bar-chart-val text-slate-200" id="epsVal27" contenteditable="true" onblur="renderEpsBars()">3.24</div>
+                                            <div id="epsBar27" class="bar-chart-bar bg-blue-500" data-val="2027" style="height:80%"></div>
+                                            <div class="bar-chart-label" id="epsLabel27" contenteditable="true">2027</div>
+                                        </div>
+                                        <div class="bar-chart-bar-wrap">
+                                            <div class="bar-chart-val text-slate-200" id="epsVal28" contenteditable="true" onblur="renderEpsBars()">3.65</div>
+                                            <div id="epsBar28" class="bar-chart-bar bg-blue-500" data-val="2028" style="height:90%"></div>
+                                            <div class="bar-chart-label" id="epsLabel28" contenteditable="true">2028</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Disclosure -->
+                                <div class="p-2 border border-dashed border-slate-300 rounded-lg text-[9px] text-slate-500 leading-normal"
+                                    id="disclosureBlock" contenteditable="true">
+                                    <p class="font-bold text-slate-700 text-[10px] mb-0.5">הצהרת גילוי נאות:</p>
+                                    דוח מחקר זה מבוסס על נתונים פיננסיים גלויים שנאספו נכון לרבעון הראשון לשנת 2026.
+                                    הניתוח בוצע לצורך כלי סימולציה ומחקר מקצועי בלבד ואינו מהווה הצעה או ייעוץ לרכישת
+                                    ניירות ערך כלשהם.
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div><!-- /report-content -->
+
+                    <!-- Glossary Legend -->
+                    <div id="glossaryBlock" class="mt-2 pt-2 border-t border-slate-100">
+                        <div class="text-[7.5px] text-slate-400 leading-relaxed">
+                            <span class="font-bold text-slate-500 text-[8px]">מקרא אינדיקטורים: </span>
+                            <span><b class="text-slate-500">P/E</b> — יחס בין מחיר המניה לרווח למניה; ככל שנמוך יותר, המניה זולה יחסית לרווחיה.</span>
+                            <span class="mx-0.5 text-slate-300">|</span>
+                            <span><b class="text-slate-500">EPS</b> — רווח נקי חלקי מספר המניות; מדד ישיר לרווחיות.</span>
+                            <span class="mx-0.5 text-slate-300">|</span>
+                            <span><b class="text-slate-500">CAGR</b> — שיעור צמיחה שנתי ממוצע לתקופת התחזית.</span>
+                            <span class="mx-0.5 text-slate-300">|</span>
+                            <span><b class="text-slate-500">PEG</b> — מכפיל P/E חלקי קצב הצמיחה; ערך מתחת ל-1 מעיד על הזדמנות.</span>
+                            <span class="mx-0.5 text-slate-300">|</span>
+                            <span><b class="text-slate-500">Beta</b> — תנודתיות המניה ביחס לשוק; 1=זהה לשוק, &gt;1=תנודתי יותר.</span>
+                            <span class="mx-0.5 text-slate-300">|</span>
+                            <span><b class="text-slate-500">52W High/Low</b> — שינוי % ממחיר גבוה/נמוך ב-52 שבועות.</span>
+                            <span class="mx-0.5 text-slate-300">|</span>
+                            <span><b class="text-slate-500">YTD</b> — תשואה מתחילת השנה הנוכחית.</span>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="report-footer mt-3 flex justify-between items-center text-[9px] text-slate-400 border-t border-slate-100 pt-1.5">
+                        <span id="footerTextL" contenteditable="true">כל הזכויות שמורות - זיו חודדה סקירת אנליסטים</span>
+                        <span id="footerTextR" contenteditable="true">עמוד 1 מתוך 1</span>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Icon Picker Modal -->
+    <div id="iconPickerModal" class="hidden fixed inset-0 bg-black/30 z-50 flex items-center justify-center no-print"
+        onclick="closeIconPickerOutside(event)">
+        <div class="bg-white rounded-xl p-4 shadow-xl w-72" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-3">
+                <h4 class="font-bold text-sm text-slate-900">בחר אייקון לפסקה</h4>
+                <button onclick="closeIconPicker()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <div id="iconPickerGrid" class="grid grid-cols-7 gap-1 max-h-52 overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <!-- Add Section Modal -->
+    <div id="sectionModal" class="hidden fixed inset-0 bg-black/30 z-50 flex items-center justify-center no-print"
+        onclick="closeSectionModalOutside(event)">
+        <div class="bg-white rounded-xl p-5 shadow-xl w-80" onclick="event.stopPropagation()">
+            <h4 class="font-bold text-sm text-slate-900 mb-3">הוסף פסקה חדשה</h4>
+            <div class="mb-2">
+                <label class="text-xs font-bold text-slate-700 block mb-1">כותרת הפסקה</label>
+                <input type="text" id="sectionModalTitle" placeholder="כותרת..."
+                    class="w-full px-3 py-1.5 text-sm rounded border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="mb-3">
+                <label class="text-xs font-bold text-slate-700 block mb-1">תוכן ראשוני</label>
+                <textarea id="sectionModalContent" rows="3" placeholder="תוכן הפסקה..."
+                    class="w-full px-3 py-1.5 text-sm rounded border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="confirmAddSection()"
+                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded text-sm font-bold">שמור</button>
+                <button onclick="closeSectionModal()"
+                    class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-1.5 rounded text-sm font-bold">ביטול</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="Report_Generator_v3.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,257 @@
+@import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700;800&display=swap');
+
+body {
+    font-family: 'Assistant', sans-serif;
+    background-color: #f3f4f6;
+}
+
+.report-page {
+    width: 210mm;
+    min-height: 297mm;
+    background: white;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    margin: 0 auto;
+    padding: 12mm 15mm;
+    position: relative;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Vertical bar chart — LTR so TTM is always leftmost */
+.bar-chart-container {
+    display: flex;
+    flex-direction: row;
+    direction: ltr;
+    align-items: flex-end;
+    height: 120px;
+    padding: 0 8px;
+    justify-content: space-evenly;
+}
+
+.bar-chart-bar-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    width: 26px;
+    flex: none;
+    height: 100%;
+}
+
+.bar-chart-bar {
+    width: 100%;
+    border-radius: 3px 3px 0 0;
+    transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 4px;
+    position: relative;
+}
+
+.bar-chart-bar:hover::after {
+    content: attr(data-val);
+    position: absolute;
+    top: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0f172a;
+    color: white;
+    font-size: 9px;
+    font-weight: bold;
+    padding: 1px 3px;
+    border-radius: 2px;
+    white-space: nowrap;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.bar-chart-label {
+    font-size: 9px;
+    color: #94a3b8;
+    text-align: center;
+    margin-top: 3px;
+    direction: ltr;
+}
+
+.bar-chart-val {
+    font-size: 9px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 1px;
+    direction: ltr;
+}
+
+/* Sections */
+.section-block {
+    border: 1px dashed transparent;
+    border-radius: 6px;
+    padding: 4px;
+    transition: border-color 0.2s;
+}
+
+.section-block:hover {
+    border-color: #e2e8f0;
+}
+
+/* Report page: flex-column so footer sticks to bottom */
+.report-page {
+    display: flex;
+    flex-direction: column;
+}
+
+.report-content {
+    flex: 1;
+}
+
+.report-footer {
+    margin-top: auto;
+}
+
+[id^="secTitle_"] {
+    font-size: 0.8125rem;
+}
+
+[id^="secContent_"] {
+    font-size: 0.77rem !important;
+    color: black !important;
+}
+
+[class*="truncate"] {
+    direction: ltr;
+}
+
+#sectionManagerList * {
+    direction: rtl;
+}
+
+#indDailyChange, #indHigh52, #indLow52, #indLow52, [id*='perf'] {
+    direction: ltr;
+}
+
+#indPeg2026 {
+    color: rgb(29 78 216 / var(--tw-text-opacity, 1));
+}
+
+#sectionModal {
+    z-index: 200;
+}
+
+/* Compact indicator rows */
+.ind-row-c {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 12px;
+    margin-bottom: 3px;
+    gap: 6px;
+}
+
+.ind-lbl {
+    color: #64748b;
+    white-space: nowrap;
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ind-val {
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+    text-align: left;
+}
+
+/* Responsive */
+@media (max-width: 1280px) {
+    .report-page {
+        width: 100%;
+        min-height: auto;
+        padding: 6mm 8mm;
+    }
+}
+
+@media (max-width: 900px) {
+    .report-page {
+        padding: 4mm 5mm;
+    }
+}
+
+@media (max-width: 640px) {
+    .sidebar-panel {
+        display: none !important;
+    }
+
+    .sidebar-panel.mobile-open {
+        display: flex !important;
+        position: fixed;
+        top: 52px;
+        right: 0;
+        bottom: 0;
+        width: 85vw;
+        z-index: 200;
+        overflow-y: auto;
+        background: #f9fafb;
+        border-left: 1px solid #e2e8f0;
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px;
+        box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+        width: 270px;
+    }
+
+    .mobile-toggle {
+        display: flex !important;
+    }
+
+    .report-page {
+        padding: 3mm;
+    }
+
+    .main-layout {
+        flex-direction: column !important;
+    }
+}
+
+.mobile-toggle {
+    display: none;
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+@media print {
+    body {
+        background: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+
+    .report-page {
+        box-shadow: none !important;
+        width: 210mm !important;
+        padding: 12mm 15mm !important;
+        margin: 0 !important;
+        page-break-after: always;
+        min-height: 297mm;
+    }
+
+    @page {
+        size: A4 portrait;
+        margin: 0;
+    }
+}
